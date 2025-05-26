@@ -205,12 +205,23 @@ const EmptyState = styled.div`
   margin-top: 40px;
 `;
 
+const ErrorMessage = styled.div`
+  color: #dc3545;
+  font-size: 14px;
+  margin-top: 8px;
+  padding: 8px 12px;
+  background: rgba(220, 53, 69, 0.1);
+  border-radius: 4px;
+  border-left: 3px solid #dc3545;
+`;
+
 const BASE_URL = 'https://localhost:7073';
 
 const Dashboard = () => {
   const [chats, setChats] = useState([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
+  const [validationError, setValidationError] = useState("");
   const [formData, setFormData] = useState({
     name: '',
     technology: '',
@@ -271,11 +282,36 @@ const Dashboard = () => {
       ...prev,
       [name]: name === 'questionsAmount' ? parseInt(value) : value
     }));
+
+    if (validationError) {
+      setValidationError('');
+    }
+  };
+
+  const validateForm = () => {
+    if (!formData.name.trim()) {
+      return 'Session name is required';
+    }
+    if (!formData.technology) {
+      return 'Technology selection is required';
+    }
+    if (!formData.grade) {
+      return 'Experience level selection is required';
+    }
+    return '';
   };
 
   const handleCreateChat = async (e) => {
     e.preventDefault();
+    
+    const error = validateForm();
+    if (error) {
+      setValidationError(error);
+      return;
+    }
+    
     setCreating(true);
+    setValidationError('');
 
     try {
       const response = await fetch(`${BASE_URL}/chats`, {
@@ -302,6 +338,7 @@ const Dashboard = () => {
       }
     } catch (error) {
       console.error('Failed to create chat:', error);
+      setValidationError("Failed to create chat. Please try again");
     } finally {
       setCreating(false);
     }
@@ -397,6 +434,11 @@ const Dashboard = () => {
                 </Select>
               </InputGroup>
             </Form>
+             
+            {validationError && (
+              <ErrorMessage>{validationError}</ErrorMessage>
+            )}
+            
             <CreateButton type="submit" onClick={handleCreateChat} disabled={creating}>
               {creating ? 'Creating...' : 'Start Coaching Session'}
             </CreateButton>
